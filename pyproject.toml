@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-task-cli = "task_cli:main"
+task-cli = "task_cli.cli:cli"
 
 [build-system]
 requires = ["hatchling"]
