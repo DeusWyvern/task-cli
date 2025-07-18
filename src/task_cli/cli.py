@@ -1,7 +1,13 @@
 import click
 import json
 import pathlib
+import sys
 from . import list_commands
+
+# Hard code file name and path for tests. To be removed.
+CURRENT_PATH = pathlib.Path().resolve()
+FILE_NAME = "test.json"
+FILE_PATH = CURRENT_PATH.joinpath(FILE_NAME)
 
 
 # Entry point for the CLI
@@ -11,13 +17,11 @@ def cli():
 
 
 @cli.command()
-@click.argument("name", type=click.STRING)
-def add(name):
+@click.argument("task", type=click.STRING, metavar="<task name>")
+def add(task):
     """Adds a task called <name> to the task list."""
 
-    current_path = pathlib.Path().resolve()
-    file_name = "test.json"
-    file_path = current_path.joinpath(file_name)
+    file_path = FILE_PATH
 
     task_dictionary = {}
     this_task_id = 1
@@ -30,15 +34,15 @@ def add(name):
             task_dictionary = json.load(openfile)
             task_id_list = list(task_dictionary.keys())
             this_task_id = int(max(task_id_list)) + 1
-        except json.JSONDecodeError as e:
-            click.echo(f"{e}")
+        except json.JSONDecodeError:
+            pass
 
     with open(file_path, "w") as openfile:
-        new_task = {this_task_id: name}
+        new_task = {this_task_id: task}
         task_dictionary.update(new_task)
         json.dump(task_dictionary, openfile)
 
-    click.echo(f"Added TASK <{name}> with ID <{this_task_id}> to file. Marked TODO.")
+    click.echo(f"Added TASK <{task}> with ID <{this_task_id}> to file. Marked TODO.")
 
 
 @cli.command()
@@ -46,8 +50,33 @@ def add(name):
 @click.argument("task", type=click.STRING, metavar="<task name>")
 def update(id, task):
     """Updates task with ID <id> to new task <task>."""
-    click.echo(f"Update: '{task}'")
-    click.echo(f"{id}")
+
+    file_path = FILE_PATH
+
+    task_dictionary = {}
+    string_id = str(id)
+
+    with open(file_path, "a+") as new_file, open(file_path, "r+") as openfile:
+        if not new_file.read():
+            click.echo("Cannot update. Task file is empty.")
+            sys.exit(1)
+
+        try:
+            task_dictionary = json.load(openfile)
+        except json.JSONDecodeError:
+            pass
+
+        if string_id not in task_dictionary.keys():
+            click.echo("Cannot update. Task ID does not exist.")
+            sys.exit(1)
+
+        task_dictionary[string_id] = task
+
+        openfile.seek(0)
+        json.dump(task_dictionary, openfile)
+        openfile.truncate()
+
+    click.echo(f"Task with ID {id} updated to '{task}.")
 
 
 @cli.command()
