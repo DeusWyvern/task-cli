@@ -56,11 +56,10 @@ def update(id, task):
     task_dictionary = {}
     string_id = str(id)
 
-    with open(file_path, "a+") as new_file, open(file_path, "r+") as openfile:
-        if not new_file.read():
-            click.echo("Cannot update. Task file is empty.")
-            sys.exit(1)
+    if not file_path.is_file():
+        open(file_path, "w").close()
 
+    with open(file_path, "r+") as openfile:
         try:
             task_dictionary = json.load(openfile)
         except json.JSONDecodeError:
