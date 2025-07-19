@@ -23,13 +23,12 @@ def add(task):
 
     file_path = FILE_PATH
 
-    task_dictionary = {}
-    this_task_id = 1
-
     if not file_path.is_file():
         open(file_path, "w").close()
 
-    with open(file_path, "r") as openfile:
+    with open(file_path, "r+") as openfile:
+        task_dictionary = {}
+        this_task_id = 1
         try:
             task_dictionary = json.load(openfile)
             task_id_list = list(task_dictionary.keys())
@@ -37,7 +36,7 @@ def add(task):
         except json.JSONDecodeError:
             pass
 
-    with open(file_path, "w") as openfile:
+        openfile.seek(0)
         new_task = {this_task_id: task}
         task_dictionary.update(new_task)
         json.dump(task_dictionary, openfile)
@@ -53,13 +52,12 @@ def update(id, task):
 
     file_path = FILE_PATH
 
-    task_dictionary = {}
-    string_id = str(id)
-
     if not file_path.is_file():
         open(file_path, "w").close()
 
     with open(file_path, "r+") as openfile:
+        task_dictionary = {}
+        string_id = str(id)
         try:
             task_dictionary = json.load(openfile)
         except json.JSONDecodeError:
@@ -82,8 +80,37 @@ def update(id, task):
 @click.argument("id", type=click.INT)
 def delete(id):
     """Removes task with ID <id>."""
-    click.echo("Remove")
-    click.echo(f"{id}")
+    file_path = FILE_PATH
+
+    removed_task = None
+
+    if not file_path.is_file():
+        open(file_path, "w").close()
+        click.echo(f"Task with ID {id} does not exist.")
+        sys.exit(1)
+
+    with open(file_path, "r+") as openfile:
+        task_dictionary = {}
+
+        try:
+            task_dictionary = json.load(openfile)
+        except json.JSONDecodeError:
+            pass
+
+        task_list = list(task_dictionary.values())
+        task_id_index = id - 1
+        removed_task = task_list.pop(task_id_index)
+
+        task_dictionary_updated = {}
+
+        for i, task in enumerate(task_list):
+            task_dictionary_updated[i + 1] = task
+
+        openfile.seek(0)
+        json.dump(task_dictionary_updated, openfile)
+        openfile.truncate()
+
+    click.echo(f"Removed TASK '{removed_task}' with ID {id}.")
 
 
 @cli.command()
