@@ -41,7 +41,7 @@ def add(task):
     new_id = 1
 
     if task_dictionary["tasks"]:
-        id_list = list((object["id"] for object in task_dictionary["tasks"]))
+        id_list = list((task["id"] for task in task_dictionary["tasks"]))
         new_id = max(id_list) + 1
 
     this_task = {
