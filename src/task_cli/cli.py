@@ -2,6 +2,7 @@ import click
 import json
 import pathlib
 import sys
+from datetime import datetime
 from . import list_commands
 
 # Hard code file name and path for tests. To be removed.
@@ -22,26 +23,41 @@ def add(task):
     """Adds a task called <name> to the task list."""
 
     file_path = FILE_PATH
+    add_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    task_dictionary = {"tasks": []}
 
     if not file_path.is_file():
-        open(file_path, "w").close()
+        with open(file_path, "w") as newfile:
+            json.dump(task_dictionary, newfile)
 
-    with open(file_path, "r+") as openfile:
-        task_dictionary = {}
-        this_task_id = 1
+    with open(file_path, "r") as readfile:
         try:
-            task_dictionary = json.load(openfile)
-            task_id_list = list(task_dictionary.keys())
-            this_task_id = int(max(task_id_list)) + 1
+            file_contents = json.load(readfile)
+            task_dictionary = file_contents
         except json.JSONDecodeError:
             pass
 
-        openfile.seek(0)
-        new_task = {this_task_id: task}
-        task_dictionary.update(new_task)
-        json.dump(task_dictionary, openfile)
+    new_id = 1
 
-    click.echo(f"Added TASK <{task}> with ID <{this_task_id}> to file. Marked TODO.")
+    if task_dictionary["tasks"]:
+        id_list = list((object["id"] for object in task_dictionary["tasks"]))
+        new_id = max(id_list) + 1
+
+    this_task = {
+        "id": new_id,
+        "description": task,
+        "status": "todo",
+        "createdAt": add_time,
+        "updatedAt": add_time,
+    }
+
+    task_dictionary["tasks"].append(this_task)
+
+    with open(file_path, "w") as writefile:
+        json.dump(task_dictionary, writefile)
+
+    click.echo(f"Added TASK <{task}> with ID <{this_task['id']}> to file. Marked TODO.")
 
 
 @cli.command()
