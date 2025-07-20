@@ -126,7 +126,7 @@ def delete(id):
 
 @cli.command()
 @click.argument("id", type=click.INT)
-def mip(id):
+def mark_in_progress(id):
     """Mark task with ID <id> as in progress."""
     click.echo("Mark in-progress")
     click.echo(f"{id}")
@@ -134,7 +134,7 @@ def mip(id):
 
 @cli.command()
 @click.argument("id", type=click.INT)
-def md(id):
+def mark_done(id):
     """Mark task with ID <id> as done."""
     click.echo("Mark done")
     click.echo(f"{id}")
