@@ -1,10 +1,11 @@
 import json
 from .constants import TASKS_DICTIONARY
 
+INDENT = 4
 
 def init_task_file(file_path):
     with open(file_path, "w") as newfile:
-        json.dump(TASKS_DICTIONARY, newfile)
+        json.dump(TASKS_DICTIONARY, newfile, indent=INDENT)
 
 
 def get_tasks(file_path):
@@ -19,4 +20,4 @@ def get_tasks(file_path):
 
 def write_tasks(file_path, tasks):
     with open(file_path, "w") as openfile:
-        json.dump(tasks, openfile)
+        json.dump(tasks, openfile, indent=INDENT)
