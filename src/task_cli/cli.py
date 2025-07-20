@@ -128,16 +128,70 @@ def delete(id):
 @click.argument("id", type=click.INT)
 def mark_in_progress(id):
     """Mark task with ID <id> as in progress."""
-    click.echo("Mark in-progress")
-    click.echo(f"{id}")
+    file_path = FILE_PATH
+
+    if not file_path.is_file():
+        file_functions.init_task_file(file_path)
+        click.echo("File initialized. No tasks.")
+        sys.exit(1)
+
+    tasks = file_functions.get_tasks(file_path)
+    tasks_list = tasks["tasks"]
+
+    found_task = None
+
+    for i, item in enumerate(tasks_list):
+        if item["id"] == id:
+            found_task = (i, item)
+            break
+
+    if found_task is None:
+        click.echo("Cannot update. Task ID does not exist.")
+        sys.exit(1)
+
+    found_index = found_task[0]
+
+    tasks_list[found_index]["status"] = "in-progress"
+
+    file_functions.write_tasks(file_path, tasks)
+
+    click.echo(f"Task '{tasks_list[found_index]['description']}' with ID {id} marked in-progress.")
+
+
 
 
 @cli.command()
 @click.argument("id", type=click.INT)
 def mark_done(id):
     """Mark task with ID <id> as done."""
-    click.echo("Mark done")
-    click.echo(f"{id}")
 
+    file_path = FILE_PATH
+
+    if not file_path.is_file():
+        file_functions.init_task_file(file_path)
+        click.echo("File initialized. No tasks.")
+        sys.exit(1)
+
+    tasks = file_functions.get_tasks(file_path)
+    tasks_list = tasks["tasks"]
+
+    found_task = None
+
+    for i, item in enumerate(tasks_list):
+        if item["id"] == id:
+            found_task = (i, item)
+            break
+
+    if found_task is None:
+        click.echo("Cannot update. Task ID does not exist.")
+        sys.exit(1)
+
+    found_index = found_task[0]
+
+    tasks_list[found_index]["status"] = "done"
+
+    file_functions.write_tasks(file_path, tasks)
+
+    click.echo(f"Task '{tasks_list[found_index]['description']}' with ID {id} marked done.")
 
 cli.add_command(list_commands.list)
