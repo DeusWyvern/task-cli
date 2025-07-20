@@ -1,9 +1,9 @@
 import click
-import json
 import pathlib
 import sys
 from datetime import datetime
 from . import list_commands
+from . import file_functions
 
 # Hard code file name and path for tests. To be removed.
 CURRENT_PATH = pathlib.Path().resolve()
@@ -25,18 +25,11 @@ def add(task):
     file_path = FILE_PATH
     add_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    task_dictionary = {"tasks": []}
-
     if not file_path.is_file():
-        with open(file_path, "w") as newfile:
-            json.dump(task_dictionary, newfile)
+        file_functions.init_task_file(file_path)
+        click.echo("File initialized.")
 
-    with open(file_path, "r") as readfile:
-        try:
-            file_contents = json.load(readfile)
-            task_dictionary = file_contents
-        except json.JSONDecodeError:
-            pass
+    task_dictionary = file_functions.get_tasks(file_path)
 
     new_id = 1
 
@@ -54,9 +47,7 @@ def add(task):
 
     task_dictionary["tasks"].append(this_task)
 
-    with open(file_path, "w") as writefile:
-        json.dump(task_dictionary, writefile)
-
+    file_functions.write_tasks(file_path, task_dictionary)
     click.echo(f"Added TASK <{task}> with ID <{this_task['id']}> to file. Marked TODO.")
 
 
@@ -67,27 +58,33 @@ def update(id, task):
     """Updates task with ID <id> to new task <task>."""
 
     file_path = FILE_PATH
+    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if not file_path.is_file():
-        open(file_path, "w").close()
+        file_functions.init_task_file(file_path)
+        click.echo("File initialized. Not tasks in file.")
+        sys.exit(1)
 
-    with open(file_path, "r+") as openfile:
-        task_dictionary = {}
-        string_id = str(id)
-        try:
-            task_dictionary = json.load(openfile)
-        except json.JSONDecodeError:
-            pass
+    tasks = file_functions.get_tasks(file_path)
+    tasks_list = tasks["tasks"]
 
-        if string_id not in task_dictionary.keys():
-            click.echo("Cannot update. Task ID does not exist.")
-            sys.exit(1)
+    found_task = None
 
-        task_dictionary[string_id] = task
+    for i, item in enumerate(tasks_list):
+        if item["id"] == id:
+            found_task = (i, item)
+            break
 
-        openfile.seek(0)
-        json.dump(task_dictionary, openfile)
-        openfile.truncate()
+    if found_task is None:
+        click.echo("Cannot update. Task ID does not exist.")
+        sys.exit(1)
+
+    found_index = found_task[0]
+
+    tasks_list[found_index]["description"] = task
+    tasks_list[found_index]["updatedAt"] = update_time
+
+    file_functions.write_tasks(file_path, tasks)
 
     click.echo(f"Task with ID {id} updated to '{task}.")
 
@@ -98,35 +95,33 @@ def delete(id):
     """Removes task with ID <id>."""
     file_path = FILE_PATH
 
-    removed_task = None
-
     if not file_path.is_file():
-        open(file_path, "w").close()
-        click.echo(f"Task with ID {id} does not exist.")
+        file_functions.init_task_file(file_path)
+        click.echo("File initialized. No tasks.")
         sys.exit(1)
 
-    with open(file_path, "r+") as openfile:
-        task_dictionary = {}
+    tasks = file_functions.get_tasks(file_path)
+    tasks_list = tasks['tasks']
 
-        try:
-            task_dictionary = json.load(openfile)
-        except json.JSONDecodeError:
-            pass
+    found_task = None
+    new_id = 1
 
-        task_list = list(task_dictionary.values())
-        task_id_index = id - 1
-        removed_task = task_list.pop(task_id_index)
+    for i, item in enumerate(tasks_list):
+        if item["id"] == id:
+            found_task = (i, item)
+        else:
+            item['id'] = new_id
+            new_id += 1
 
-        task_dictionary_updated = {}
+    if found_task is None:
+        click.echo("Cannot delete. Task ID does not exist.")
+        sys.exit(1)
 
-        for i, task in enumerate(task_list):
-            task_dictionary_updated[i + 1] = task
+    tasks_list.pop(found_task[0])
 
-        openfile.seek(0)
-        json.dump(task_dictionary_updated, openfile)
-        openfile.truncate()
+    file_functions.write_tasks(file_path, tasks)
 
-    click.echo(f"Removed TASK '{removed_task}' with ID {id}.")
+    click.echo(f"Removed TASK '{found_task[1]['description']}' with ID {id}.")
 
 
 @cli.command()
