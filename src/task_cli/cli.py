@@ -20,7 +20,7 @@ def cli():
 @cli.command()
 @click.argument("task", type=click.STRING, metavar="<task name>")
 def add(task):
-    """Adds a task called <name> to the task list."""
+    """Adds a task called <task name> to the task list."""
 
     file_path = FILE_PATH
     add_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -55,7 +55,7 @@ def add(task):
 @click.argument("id", type=click.INT)
 @click.argument("task", type=click.STRING, metavar="<task name>")
 def update(id, task):
-    """Updates task with ID <id> to new task <task>."""
+    """Updates task with ID <id> to new task <task name>."""
 
     file_path = FILE_PATH
     update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
