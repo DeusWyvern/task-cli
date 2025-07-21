@@ -1,7 +1,6 @@
 import click
 import sys
 from . import file_functions
-from . import cli
 from . import list_functions
 
 @click.group(invoke_without_command=True)
@@ -9,7 +8,7 @@ from . import list_functions
 def list(ctx):
     """List all tasks. Can be filtered by flag."""
     if not ctx.invoked_subcommand:
-        file_path = cli.FILE_PATH
+        file_path = ctx.obj['path']
         tasks_file = file_functions.get_tasks(file_path)
         tasks = tasks_file['tasks']
         for task in tasks:
@@ -20,10 +19,11 @@ def list(ctx):
 
 
 @list.command()
-def done():
+@click.pass_context
+def done(ctx):
     """List all tasks flagged as done."""
     filter = 'done'
-    file_path = cli.FILE_PATH
+    file_path = ctx.obj['path']
     tasks_file = file_functions.get_tasks(file_path)
     tasks = tasks_file['tasks']
     filtered_tasks = list_functions.filter_tasks(tasks, filter)
@@ -34,10 +34,11 @@ def done():
 
 
 @list.command()
-def todo():
+@click.pass_context
+def todo(ctx):
     """List all tasks flagged as todo."""
     filter = 'todo'
-    file_path = cli.FILE_PATH
+    file_path = ctx.obj['path']
     tasks_file = file_functions.get_tasks(file_path)
     tasks = tasks_file['tasks']
     filtered_tasks = list_functions.filter_tasks(tasks, filter)
@@ -47,10 +48,11 @@ def todo():
         click.echo(task_string)
 
 @list.command()
-def in_progress():
+@click.pass_context
+def in_progress(ctx):
     """List all tasks flagged still in-progress."""
     filter = 'in-progress'
-    file_path = cli.FILE_PATH
+    file_path = ctx.obj['path']
     tasks_file = file_functions.get_tasks(file_path)
     tasks = tasks_file['tasks']
     filtered_tasks = list_functions.filter_tasks(tasks, filter)

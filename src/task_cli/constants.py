@@ -1,1 +1,3 @@
 TASKS_DICTIONARY = {"tasks": []}
+FILE_EXTENSION = '.json'
+DEFAULT_FILE_NAME = 'task'

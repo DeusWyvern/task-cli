@@ -4,30 +4,36 @@ import sys
 from datetime import datetime
 from . import list_commands
 from . import file_functions
-
-# Hard code file name and path for tests. To be removed.
-CURRENT_PATH = pathlib.Path().resolve()
-FILE_NAME = "test.json"
-FILE_PATH = CURRENT_PATH.joinpath(FILE_NAME)
-
+from .constants import FILE_EXTENSION, DEFAULT_FILE_NAME
 
 # Entry point for the CLI
-@click.group()
-def cli():
-    pass
+@click.group(invoke_without_command=True)
+@click.pass_context
+@click.option('--file', '-f', default=DEFAULT_FILE_NAME, help='Name of the file to store tasks in.')
+@click.argument("path", type=click.Path(exists=True, file_okay=False, readable=True, path_type=pathlib.Path))
+def cli(ctx, file, path):
+    file_name = file + FILE_EXTENSION
+    file_path = path.joinpath(file_name)
+    if not file_path.is_file():
+        file_functions.init_task_file(file_path)
+        click.echo(f"File initialized at '{file_path}'")
+    elif not ctx.invoked_subcommand:
+        click.echo("No arguments provided.")
+        sys.exit(1)
+
+    ctx.obj = {}
+    ctx.obj['path'] = file_path
+
 
 
 @cli.command()
 @click.argument("task", type=click.STRING, metavar="<task name>")
-def add(task):
+@click.pass_context
+def add(ctx, task):
     """Adds a task called <task name> to the task list."""
 
-    file_path = FILE_PATH
+    file_path = ctx.obj['path']
     add_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    if not file_path.is_file():
-        file_functions.init_task_file(file_path)
-        click.echo("File initialized.")
 
     task_dictionary = file_functions.get_tasks(file_path)
 
@@ -54,16 +60,13 @@ def add(task):
 @cli.command()
 @click.argument("id", type=click.INT)
 @click.argument("task", type=click.STRING, metavar="<task name>")
-def update(id, task):
+@click.pass_context
+def update(ctx, id, task):
     """Updates task with ID <id> to new task <task name>."""
 
-    file_path = FILE_PATH
-    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if not file_path.is_file():
-        file_functions.init_task_file(file_path)
-        click.echo("File initialized. Not tasks in file.")
-        sys.exit(1)
+    file_path = ctx.obj['path']
+    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     tasks = file_functions.get_tasks(file_path)
     tasks_list = tasks["tasks"]
@@ -91,14 +94,11 @@ def update(id, task):
 
 @cli.command()
 @click.argument("id", type=click.INT)
-def delete(id):
+@click.pass_context
+def delete(ctx, id):
     """Removes task with ID <id>."""
-    file_path = FILE_PATH
 
-    if not file_path.is_file():
-        file_functions.init_task_file(file_path)
-        click.echo("File initialized. No tasks.")
-        sys.exit(1)
+    file_path = ctx.obj['path']
 
     tasks = file_functions.get_tasks(file_path)
     tasks_list = tasks['tasks']
@@ -126,14 +126,11 @@ def delete(id):
 
 @cli.command()
 @click.argument("id", type=click.INT)
-def mark_in_progress(id):
+@click.pass_context
+def mark_in_progress(ctx, id):
     """Mark task with ID <id> as in progress."""
-    file_path = FILE_PATH
 
-    if not file_path.is_file():
-        file_functions.init_task_file(file_path)
-        click.echo("File initialized. No tasks.")
-        sys.exit(1)
+    file_path = ctx.obj['path']
 
     tasks = file_functions.get_tasks(file_path)
     tasks_list = tasks["tasks"]
@@ -162,15 +159,11 @@ def mark_in_progress(id):
 
 @cli.command()
 @click.argument("id", type=click.INT)
-def mark_done(id):
+@click.pass_context
+def mark_done(ctx, id):
     """Mark task with ID <id> as done."""
 
-    file_path = FILE_PATH
-
-    if not file_path.is_file():
-        file_functions.init_task_file(file_path)
-        click.echo("File initialized. No tasks.")
-        sys.exit(1)
+    file_path = ctx.obj['path']
 
     tasks = file_functions.get_tasks(file_path)
     tasks_list = tasks["tasks"]
