@@ -1,27 +1,60 @@
 import click
-
+import sys
+from . import file_functions
+from . import cli
+from . import list_functions
 
 @click.group(invoke_without_command=True)
 @click.pass_context
 def list(ctx):
     """List all tasks. Can be filtered by flag."""
     if not ctx.invoked_subcommand:
-        click.echo(f"List all {ctx.invoked_subcommand}")
+        file_path = cli.FILE_PATH
+        tasks_file = file_functions.get_tasks(file_path)
+        tasks = tasks_file['tasks']
+        for task in tasks:
+            task_string = list_functions.format_task(task)
+            click.echo(task_string)
+        sys.exit(0)
+
 
 
 @list.command()
 def done():
     """List all tasks flagged as done."""
-    click.echo("Done")
+    filter = 'done'
+    file_path = cli.FILE_PATH
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks = tasks_file['tasks']
+    filtered_tasks = list_functions.filter_tasks(tasks, filter)
+
+    for task in filtered_tasks:
+        task_string = list_functions.format_task(task)
+        click.echo(task_string)
 
 
 @list.command()
 def todo():
     """List all tasks flagged as todo."""
-    click.echo("Todo")
+    filter = 'todo'
+    file_path = cli.FILE_PATH
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks = tasks_file['tasks']
+    filtered_tasks = list_functions.filter_tasks(tasks, filter)
 
+    for task in filtered_tasks:
+        task_string = list_functions.format_task(task)
+        click.echo(task_string)
 
 @list.command()
 def in_progress():
     """List all tasks flagged still in-progress."""
-    click.echo("In-progress")
+    filter = 'in-progress'
+    file_path = cli.FILE_PATH
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks = tasks_file['tasks']
+    filtered_tasks = list_functions.filter_tasks(tasks, filter)
+
+    for task in filtered_tasks:
+        task_string = list_functions.format_task(task)
+        click.echo(task_string)
