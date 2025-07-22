@@ -10,7 +10,7 @@ from .constants import FILE_EXTENSION, DEFAULT_FILE_NAME
 @click.group(invoke_without_command=True)
 @click.pass_context
 @click.option('--file', '-f', default=DEFAULT_FILE_NAME, help='Name of the file to store tasks in.')
-@click.argument("path", type=click.Path(exists=True, file_okay=False, readable=True, path_type=pathlib.Path))
+@click.argument("path", type=click.Path(exists=True, file_okay=False, readable=True, path_type=pathlib.Path), metavar="<PATH>")
 def cli(ctx, file, path):
     file_name = file + FILE_EXTENSION
     file_path = path.joinpath(file_name)
@@ -34,13 +34,13 @@ def add(ctx, task):
 
     file_path = ctx.obj['path']
     add_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    task_dictionary = file_functions.get_tasks(file_path)
-
     new_id = 1
 
-    if task_dictionary["tasks"]:
-        id_list = list((task["id"] for task in task_dictionary["tasks"]))
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks_list = tasks_file['tasks']
+
+    if tasks_list:
+        id_list = list((task["id"] for task in tasks_list))
         new_id = max(id_list) + 1
 
     this_task = {
@@ -51,9 +51,9 @@ def add(ctx, task):
         "updatedAt": add_time,
     }
 
-    task_dictionary["tasks"].append(this_task)
+    tasks_list.append(this_task)
 
-    file_functions.write_tasks(file_path, task_dictionary)
+    file_functions.write_tasks(file_path, tasks_file)
     click.echo(f"Added TASK <{task}> with ID <{this_task['id']}> to file. Marked TODO.")
 
 
@@ -64,32 +64,29 @@ def add(ctx, task):
 def update(ctx, id, task):
     """Updates task with ID <id> to new task <task name>."""
 
-
     file_path = ctx.obj['path']
     update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    tasks = file_functions.get_tasks(file_path)
-    tasks_list = tasks["tasks"]
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks_list = tasks_file["tasks"]
 
-    found_task = None
+    found_index = None
 
     for i, item in enumerate(tasks_list):
         if item["id"] == id:
-            found_task = (i, item)
+            found_index = i
             break
 
-    if found_task is None:
+    if found_index is None:
         click.echo("Cannot update. Task ID does not exist.")
         sys.exit(1)
-
-    found_index = found_task[0]
 
     tasks_list[found_index]["description"] = task
     tasks_list[found_index]["updatedAt"] = update_time
 
-    file_functions.write_tasks(file_path, tasks)
+    file_functions.write_tasks(file_path, tasks_file)
 
-    click.echo(f"Task with ID {id} updated to '{task}.")
+    click.echo(f"Task with ID {id} updated to '{task}'.")
 
 
 @cli.command()
@@ -100,8 +97,8 @@ def delete(ctx, id):
 
     file_path = ctx.obj['path']
 
-    tasks = file_functions.get_tasks(file_path)
-    tasks_list = tasks['tasks']
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks_list = tasks_file['tasks']
 
     found_task = None
     new_id = 1
@@ -119,7 +116,7 @@ def delete(ctx, id):
 
     tasks_list.pop(found_task[0])
 
-    file_functions.write_tasks(file_path, tasks)
+    file_functions.write_tasks(file_path, tasks_file)
 
     click.echo(f"Removed TASK '{found_task[1]['description']}' with ID {id}.")
 
@@ -132,8 +129,8 @@ def mark_in_progress(ctx, id):
 
     file_path = ctx.obj['path']
 
-    tasks = file_functions.get_tasks(file_path)
-    tasks_list = tasks["tasks"]
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks_list = tasks_file["tasks"]
 
     found_task = None
 
@@ -150,7 +147,7 @@ def mark_in_progress(ctx, id):
 
     tasks_list[found_index]["status"] = "in-progress"
 
-    file_functions.write_tasks(file_path, tasks)
+    file_functions.write_tasks(file_path, tasks_file)
 
     click.echo(f"Task '{tasks_list[found_index]['description']}' with ID {id} marked in-progress.")
 
@@ -165,8 +162,8 @@ def mark_done(ctx, id):
 
     file_path = ctx.obj['path']
 
-    tasks = file_functions.get_tasks(file_path)
-    tasks_list = tasks["tasks"]
+    tasks_file = file_functions.get_tasks(file_path)
+    tasks_list = tasks_file["tasks"]
 
     found_task = None
 
@@ -183,7 +180,7 @@ def mark_done(ctx, id):
 
     tasks_list[found_index]["status"] = "done"
 
-    file_functions.write_tasks(file_path, tasks)
+    file_functions.write_tasks(file_path, tasks_file)
 
     click.echo(f"Task '{tasks_list[found_index]['description']}' with ID {id} marked done.")
 
